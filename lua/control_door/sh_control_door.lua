@@ -22,3 +22,24 @@ function CONTROL_DOOR.GetStableDoors()
 
     return stable
 end
+
+--- Joue un son audible uniquement par le joueur donné.
+-- @param ent Entity : entité d'ou le son est émis.
+-- @param sound string : chemin du son (relatif à sound/), ignoré s'il est vide.
+-- @param loop boolean : vrai si le son doit être lu en boucle.
+-- @return nil
+function CONTROL_DOOR.PlaySound(ent, sound, loop)
+    if not isstring(sound) or sound == "" then return end
+
+    local filter = nil
+    if SERVER then
+        filter = RecipientFilter()
+        filter:AddPlayer(ent)
+    end
+
+    if loop then
+        ent:StartLoopingSound(sound)
+    else
+        ent:EmitSound(sound, 0, 100, 1, CHAN_STATIC, 0, 0, filter)
+    end
+end

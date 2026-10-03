@@ -18,4 +18,5 @@ end
 LoadFile(ROOT .. "sh_config.lua")
 LoadFile(ROOT .. "sh_control_door.lua")
 LoadFile(ROOT .. "sv_control_door.lua")
+LoadFile(ROOT .. "cl_ui.lua")
 LoadFile(ROOT .. "cl_control_door.lua")

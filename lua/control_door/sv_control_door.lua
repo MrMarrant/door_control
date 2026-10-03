@@ -13,14 +13,34 @@ local openedFrom = setmetatable({}, { __mode = "k" })
 -- Dernière sélection traitée par joueur, pour limiter le débit.
 local lastSelect = setmetatable({}, { __mode = "k" })
 
---- Envoie la liste des portes stables à un joueur.
+local DEFAULT_WORLD_MINS = Vector(-16384, -16384, -16384)
+local DEFAULT_WORLD_MAXS = Vector(16384, 16384, 16384)
+
+--- Retourne les limites de la map chargée (utilisées pour cadrer la vue de la carte).
+-- @return Vector, Vector : coin minimal et coin maximal du monde.
+local function GetWorldBounds()
+    local world = game.GetWorld()
+    local mins = world:GetInternalVariable("m_WorldMins")
+    local maxs = world:GetInternalVariable("m_WorldMaxs")
+
+    if not isvector(mins) or not isvector(maxs) then
+        return DEFAULT_WORLD_MINS, DEFAULT_WORLD_MAXS
+    end
+
+    return mins, maxs
+end
+
+--- Envoie la liste des portes stables et les limites de la map à un joueur.
 -- @param ply Player : joueur destinataire.
 -- @return nil
 local function SendStableList(ply)
     local doors = CONTROL_DOOR.GetStableDoors()
     local count = math.min(#doors, MAX_LISTED_DOORS)
+    local worldMins, worldMaxs = GetWorldBounds()
 
     net.Start("control_door_list")
+        net.WriteVector(worldMins)
+        net.WriteVector(worldMaxs)
         net.WriteUInt(count, 8)
         for i = 1, count do
             net.WriteUInt(doors[i]:EntIndex(), 16)
@@ -47,11 +67,36 @@ end
 local function TeleportToDoor(ply, target)
     if ply:InVehicle() then ply:ExitVehicle() end
 
-    local targetPos = target:GetPos() + target:GetForward() * 95 + Vector(0, 0, 18)
-    local targetAng = (target:GetPos() - targetPos):Angle()
+    local targetPos = target:GetPos() + target:GetForward() * 60 + Vector(0, 0, 0)
+    local targetAng = target:GetAngles()
 
     ply:SetPos(targetPos)
     ply:SetEyeAngles(Angle(targetAng.p, targetAng.y, 0))
+end
+
+--- Joue le flash lumineux de téléportation : l'écran blanchit, le joueur est téléporté au pic, puis le flash s'estompe.
+-- @param ply Player : joueur à téléporter.
+-- @param target Entity : porte stable de destination.
+-- @return nil
+local function TeleportWithFlash(ply, target)
+    local half = CONTROL_DOOR.TeleportFlashDuration * 0.5
+    local color = CONTROL_DOOR.TeleportFlashColor
+
+    CONTROL_DOOR.PlaySound(ply, CONTROL_DOOR.Sounds.Teleport)
+
+    -- Le maintien couvre l'écart éventuel entre la fin du fondu et le déclenchement du timer.
+    ply:ScreenFade(SCREENFADE.OUT, color, half, 0.2)
+
+    timer.Simple(half, function()
+        if not IsValid(ply) then return end
+
+        -- La porte ou le joueur ont pu changer pendant le fondu : on revalide avant de déplacer.
+        if ply:Alive() and IsValid(target) and CONTROL_DOOR.IsStableDoor(target) then
+            TeleportToDoor(ply, target)
+        end
+
+        ply:ScreenFade(bit.bor(SCREENFADE.IN, SCREENFADE.PURGE), color, half, 0)
+    end)
 end
 
 --- Réception de la sélection d'une porte stable par un joueur.
@@ -73,11 +118,12 @@ net.Receive("control_door_select", function(len, ply)
     if target:GetClass() ~= "control_door_frame" or not CONTROL_DOOR.IsStableDoor(target) then return end
 
     openedFrom[ply] = nil
-    TeleportToDoor(ply, target)
 
     net.Start("control_door_open_panel")
         net.WriteString("close")
     net.Send(ply)
+
+    TeleportWithFlash(ply, target)
 end)
 
 --- Crée une porte de démonstration au point visé par le joueur.

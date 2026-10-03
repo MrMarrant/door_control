@@ -35,6 +35,7 @@ if CLIENT then return end
 -- @return nil
 function ENT:StartUnstableCycle()
     self:StopUnstableCycle()
+    CONTROL_DOOR.PlaySound(self, CONTROL_DOOR.Sounds.UnstableLoop, true)
 
     local timerName = "control_door_cycle_" .. tostring(self:EntIndex())
     self._controlDoorTimerName = timerName
@@ -56,6 +57,7 @@ function ENT:StopUnstableCycle()
     if self._controlDoorTimerName then
         timer.Remove(self._controlDoorTimerName)
         self._controlDoorTimerName = nil
+        self:StopSound(CONTROL_DOOR.Sounds.UnstableLoop)
     end
 end
 
@@ -114,7 +116,7 @@ function ENT:CreateStableDoor()
     local door = ents.Create("prop_dynamic_override")
     if not IsValid(door) then return end
 
-    door:SetModel(table.Random(CONTROL_DOOR.DoorModels))
+    door:SetModel("models/props_c17/door01_left.mdl")
     door:SetPos(self:LocalToWorld(CONTROL_DOOR.PortalOffset))
     door:SetAngles(self:LocalToWorldAngles(Angle(0, 180, 0)))
     door:SetSolid(SOLID_NONE)
@@ -124,9 +126,11 @@ function ENT:CreateStableDoor()
     door:SetLocalPos(CONTROL_DOOR.PortalOffset)
     door:SetLocalAngles(Angle(0, 180, 0))
     door:SetRenderMode(RENDERMODE_TRANSALPHA)
-    door:SetColor(Color(140, 180, 255, 210))
+    door:SetColor(Color(199, 217, 252, 240))
     door:SetMaterial("models/screenspace")
     self.PortalDoor = door
+
+    CONTROL_DOOR.PlaySound(self, CONTROL_DOOR.Sounds.StableOpen)
 end
 
 --- Supprime la porte stable actuelle.
