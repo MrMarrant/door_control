@@ -7,11 +7,12 @@ ENT.Category = "Control Door"
 ENT.Spawnable = true
 ENT.AdminOnly = false
 
---- Déclare les variables réseau de l'entité (état de la porte, synchronisé serveur → clients).
--- Génère ENT:GetDoorState() et ENT:SetDoorState(state : string).
+--- Déclare les variables réseau de l'entité (synchronisées serveur → clients).
+-- Génère ENT:Get/SetDoorState (string) et ENT:Get/SetPortalDoor (Entity : porte stable affichée).
 -- @return nil
 function ENT:SetupDataTables()
     self:NetworkVar("String", 0, "DoorState")
+    self:NetworkVar("Entity", 0, "PortalDoor")
 end
 
 --- Initialise l'entité au spawn (modèle partagé, physique et cycle côté serveur).
@@ -29,6 +30,7 @@ function ENT:Initialize()
     self:StartUnstableCycle()
 end
 
+-- L'écran de la caméra des portes stables est dessiné côté client par cl_portal_view.lua.
 if CLIENT then return end
 
 --- Démarre le cycle d'animation des portes qui défilent.
@@ -126,9 +128,10 @@ function ENT:CreateStableDoor()
     door:SetLocalPos(CONTROL_DOOR.PortalOffset)
     door:SetLocalAngles(Angle(0, 180, 0))
     door:SetRenderMode(RENDERMODE_TRANSALPHA)
-    door:SetColor(Color(199, 217, 252, 240))
-    door:SetMaterial("models/screenspace")
+    door:SetColor(Color(199, 217, 252, 0))
+    door:DrawShadow(false)
     self.PortalDoor = door
+    self:SetPortalDoor(door)
 
     CONTROL_DOOR.PlaySound(self, CONTROL_DOOR.Sounds.StableOpen)
 end
@@ -141,6 +144,7 @@ function ENT:RemoveStableDoor()
     end
 
     self.PortalDoor = nil
+    self:SetPortalDoor(NULL)
 end
 
 --- Gère l'interaction avec la porte (serveur uniquement).

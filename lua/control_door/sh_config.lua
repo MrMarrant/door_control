@@ -21,6 +21,15 @@ CONTROL_DOOR.MapListWidth = 0.2
 -- Durée totale (en secondes) du flash de téléportation : moitié en fondu d'entrée, moitié en fondu de sortie.
 CONTROL_DOOR.TeleportFlashDuration = 2
 CONTROL_DOOR.TeleportFlashColor = Color(230, 240, 255, 255)
+-- Caméra affichée sur la face avant d'une porte stable (rendu client).
+CONTROL_DOOR.PortalCamera = {
+    Distance = 150,         -- distance (unités) entre la porte et la caméra, devant la porte
+    Height = 0,             -- décalage vertical de la caméra par rapport au centre de la porte
+    Fov = 70,               -- champ de vision de la caméra
+    Resolution = 512,       -- taille (px) de la texture de rendu, carrée
+    RenderDistance = 1500,  -- au-delà de cette distance, l'écran n'est plus mis à jour
+    FrameRate = 30          -- mises à jour maximales par seconde et par porte
+}
 CONTROL_DOOR.PortalOffset = Vector(1, 38, 0)
 CONTROL_DOOR.PortalOffsetMinDiff = Vector(0, -5, 5)
 CONTROL_DOOR.PortalOffsetMaxDiff = Vector(0, 5, 5)
