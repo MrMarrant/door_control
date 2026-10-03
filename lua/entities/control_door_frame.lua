@@ -30,84 +30,25 @@ function ENT:Initialize()
     self:StartUnstableCycle()
 end
 
--- L'écran de la caméra des portes stables est dessiné côté client par cl_portal_view.lua.
+-- Côté client : l'écran des portes stables est dessiné par cl_portal_view.lua,
+-- et les portes fantômes de l'état instable sont créées et animées par cl_ghost_doors.lua.
 if CLIENT then return end
 
---- Démarre le cycle d'animation des portes qui défilent.
+--- Démarre l'ambiance de l'état instable (son en boucle) ; les portes fantômes sont gérées côté client.
 -- @return nil
 function ENT:StartUnstableCycle()
     self:StopUnstableCycle()
     CONTROL_DOOR.PlaySound(self, CONTROL_DOOR.Sounds.UnstableLoop, true)
-
-    local timerName = "control_door_cycle_" .. tostring(self:EntIndex())
-    self._controlDoorTimerName = timerName
-
-    timer.Create(timerName, CONTROL_DOOR.ScrollInterval, 0, function()
-        if not IsValid(self) then
-            timer.Remove(timerName)
-            return
-        end
-
-        if self:GetDoorState() ~= CONTROL_DOOR.STATE_UNSTABLE then return end
-        self:SpawnGhostDoor()
-    end)
+    self._unstableLoopPlaying = true
 end
 
---- Arrête le cycle d'animation des portes.
+--- Arrête l'ambiance de l'état instable.
 -- @return nil
 function ENT:StopUnstableCycle()
-    if self._controlDoorTimerName then
-        timer.Remove(self._controlDoorTimerName)
-        self._controlDoorTimerName = nil
+    if self._unstableLoopPlaying then
         self:StopSound(CONTROL_DOOR.Sounds.UnstableLoop)
+        self._unstableLoopPlaying = nil
     end
-end
-
---- Crée une porte fantôme qui glisse vers le bas puis disparaît.
--- @return nil
-function ENT:SpawnGhostDoor()
-    local ghost = ents.Create("prop_dynamic_override")
-    if not IsValid(ghost) then return end
-
-    -- Positions locales au cadre : la porte fantôme est parentée, on l'anime donc en repère local.
-    local startPos = CONTROL_DOOR.PortalOffset + Vector(
-        math.random(CONTROL_DOOR.PortalOffsetMinDiff.x, CONTROL_DOOR.PortalOffsetMaxDiff.x),
-        math.random(CONTROL_DOOR.PortalOffsetMinDiff.y, CONTROL_DOOR.PortalOffsetMaxDiff.y),
-        math.random(CONTROL_DOOR.PortalOffsetMinDiff.z, CONTROL_DOOR.PortalOffsetMaxDiff.z)
-    )
-    local endPos = startPos + CONTROL_DOOR.DistanceScroll
-
-    ghost:SetModel(table.Random(CONTROL_DOOR.DoorModels))
-    ghost:SetPos(self:LocalToWorld(startPos))
-    ghost:SetAngles(self:LocalToWorldAngles(Angle(0, 180, 0)))
-    ghost:SetSolid(SOLID_NONE)
-    ghost:SetMoveType(MOVETYPE_NONE)
-    ghost:Spawn()
-    ghost:SetParent(self)
-    ghost:SetLocalPos(startPos)
-    ghost:SetLocalAngles(Angle(0, 180, 0))
-    ghost:SetRenderMode(RENDERMODE_TRANSALPHA)
-    ghost:SetColor(Color(180, 210, 255, 230))
-
-    local timerName = "control_door_ghost_" .. tostring(ghost:EntIndex())
-    local startTime = CurTime()
-
-    timer.Create(timerName, 0, 0, function()
-        if not IsValid(ghost) then
-            timer.Remove(timerName)
-            return
-        end
-
-        local progress = math.min((CurTime() - startTime) / CONTROL_DOOR.ScrollDuration, 1)
-
-        ghost:SetLocalPos(LerpVector(progress, startPos, endPos))
-        ghost:SetColor(Color(180, 210, 255, 255 - math.floor(progress * 200)))
-
-        if progress >= 1 then
-            timer.Remove(timerName)
-            ghost:Remove()
-        end
-    end)
 end
 
 --- Crée une porte stable avec un effet de portail.

@@ -10,9 +10,12 @@ CONTROL_DOOR.DoorModels = {
     "models/props_doors/doormain01_small.mdl",
 }
 
+-- Intervalle (en secondes) entre l'apparition de deux portes fantômes sur une porte instable.
 CONTROL_DOOR.ScrollInterval = 0.1
-CONTROL_DOOR.ScrollDuration = 1.5
-CONTROL_DOOR.FadeDuration = 0.4
+-- Durée de vie (en secondes) d'une porte fantôme : elle chute et s'estompe pendant ce temps, puis est supprimée.
+CONTROL_DOOR.ScrollDuration = 0.5
+-- Vitesse de chute (en unités par seconde) d'une porte fantôme, dans la direction de DistanceScroll.
+CONTROL_DOOR.GhostFallSpeed = 300
 CONTROL_DOOR.MapViewFadeIn = 0.5
 -- Épaisseur (en unités) ignorée sous le plafond de la map par la vue du dessus, pour passer à travers la skybox.
 CONTROL_DOOR.MapViewCeilingClip = 16
@@ -33,7 +36,11 @@ CONTROL_DOOR.PortalCamera = {
 CONTROL_DOOR.PortalOffset = Vector(1, 38, 0)
 CONTROL_DOOR.PortalOffsetMinDiff = Vector(0, -5, 5)
 CONTROL_DOOR.PortalOffsetMaxDiff = Vector(0, 5, 5)
+-- Direction de chute des portes fantômes (seule la direction compte : la distance vient de GhostFallSpeed × ScrollDuration).
 CONTROL_DOOR.DistanceScroll = Vector(0, 0, -1500)
+-- Portes fantômes de l'état instable (rendu client uniquement).
+CONTROL_DOOR.GhostColor = Color(180, 210, 255)
+CONTROL_DOOR.GhostRenderDistance = 2000
 
 CONTROL_DOOR.Sounds = {  -- TODO : a faire les sons
     UnstableLoop = "control_door/unstable_loop.wav",

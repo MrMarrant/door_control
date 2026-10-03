@@ -4,7 +4,6 @@ CONTROL_DOOR = CONTROL_DOOR or {}
 
 -- Décalage (unités) de l'écran devant la face de la porte, pour éviter le z-fighting.
 local SCREEN_SURFACE_OFFSET = -5
-local FRAME_SCAN_INTERVAL = 1
 
 -- Faces de la porte : 1 = avant (côté du forward du cadre), -1 = arrière.
 local SIDE_FRONT = 1
@@ -14,8 +13,6 @@ local SIDE_NAMES = { [SIDE_FRONT] = "front", [SIDE_BACK] = "back" }
 
 -- Render target et matériau de chaque face de chaque cadre, indexés par EntIndex puis par face.
 local portalViews = {}
--- Cadres de porte connus du client, rafraîchis périodiquement.
-local knownFrames = {}
 -- Vrai pendant le rendu d'une caméra : empêche un écran de s'afficher dans sa propre texture.
 local isRenderingPortal = false
 
@@ -72,7 +69,7 @@ local function GetPortalScreen(frame, side)
     local normal = frontNormal * side
     local center = door:LocalToWorld(door:OBBCenter()) + normal * (thickness * 0.5 + SCREEN_SURFACE_OFFSET)
 
-    return center, normal, width - 3, size.z
+    return center, normal, width - 4, size.z - 4
 end
 
 --- Rend la vue de la caméra fixe placée en face d'une face de la porte dans sa render target.
@@ -171,7 +168,7 @@ hook.Add("PreRender", "control_door_portal_views", function()
     local now = RealTime()
     local eyePos = ply:EyePos()
 
-    for _, frame in ipairs(knownFrames) do
+    for _, frame in ipairs(CONTROL_DOOR.GetClientFrames()) do
         if ShouldRenderPortal(frame, eyePos) then
             for _, side in ipairs(SIDES) do
                 UpdatePortalSide(frame, side, eyePos, now)
@@ -190,17 +187,11 @@ hook.Add("PostDrawTranslucentRenderables", "control_door_portal_screens", functi
 
     local eyePos = EyePos()
 
-    for _, frame in ipairs(knownFrames) do
+    for _, frame in ipairs(CONTROL_DOOR.GetClientFrames()) do
         if IsValid(frame) and not frame:IsDormant() and CONTROL_DOOR.IsStableDoor(frame) then
             for _, side in ipairs(SIDES) do
                 DrawPortalScreen(frame, side, eyePos)
             end
         end
     end
-end)
-
---- Rafraîchit périodiquement la liste des cadres de porte connus du client.
--- @return nil
-timer.Create("control_door_portal_scan", FRAME_SCAN_INTERVAL, 0, function()
-    knownFrames = ents.FindByClass("control_door_frame")
 end)
