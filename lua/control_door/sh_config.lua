@@ -33,7 +33,19 @@ CONTROL_DOOR.PortalCamera = {
     RenderDistance = 1500,  -- au-delà de cette distance, l'écran n'est plus mis à jour
     FrameRate = 30          -- mises à jour maximales par seconde et par porte
 }
-CONTROL_DOOR.PortalOffset = Vector(1, 38, 0)
+-- Couleur de l'écran des portes stables (rendu client) : l'image est mélangée à cette couleur.
+CONTROL_DOOR.PortalTint = {
+    Color = Color(77, 238, 238),  -- Couleur de l'image
+    Strength = 0.05                 -- force du mélange, de 0 (aucun effet) à 1 (couleur unie)
+}
+-- Effet de vague sur l'écran des portes stables (rendu client).
+CONTROL_DOOR.PortalWave = {
+    Amplitude = 0.005,  -- déplacement maximal de l'image, en fraction de sa taille (0 = pas de vague)
+    Frequency = 3,    -- nombre d'ondulations sur la hauteur / la largeur de l'écran
+    Speed = 0.5,          -- vitesse de l'ondulation
+    Subdivisions = 8   -- finesse de la grille (plus élevé = vague plus douce, mais plus coûteuse)
+}
+CONTROL_DOOR.PortalOffset =Vector(1, 38, 0)
 CONTROL_DOOR.PortalOffsetMinDiff = Vector(0, -5, 5)
 CONTROL_DOOR.PortalOffsetMaxDiff = Vector(0, 5, 5)
 -- Direction de chute des portes fantômes (seule la direction compte : la distance vient de GhostFallSpeed × ScrollDuration).

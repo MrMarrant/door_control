@@ -72,6 +72,21 @@ local function GetPortalScreen(frame, side)
     return center, normal, width - 4, size.z - 4
 end
 
+--- Éclaircit l'image de la render target en cours en la mélangeant à une couleur claire.
+-- Doit être appelée entre render.PushRenderTarget et render.PopRenderTarget.
+-- @param size number : taille (px) de la render target, carrée.
+-- @return nil
+local function ApplyPortalTint(size)
+    local tint = CONTROL_DOOR.PortalTint
+    local alpha = math.Clamp(tint.Strength, 0, 1) * 255
+    if alpha <= 0 then return end
+
+    cam.Start2D()
+        surface.SetDrawColor(tint.Color.r, tint.Color.g, tint.Color.b, alpha)
+        surface.DrawRect(0, 0, size, size)
+    cam.End2D()
+end
+
 --- Rend la vue de la caméra fixe placée en face d'une face de la porte dans sa render target.
 -- @param view table : vue retournée par GetPortalView.
 -- @param center Vector : centre de l'écran.
@@ -99,6 +114,7 @@ local function RenderPortalView(view, center, normal, width, height)
             dopostprocess = false,
             drawmonitors = false
         })
+        ApplyPortalTint(size)
     render.PopRenderTarget()
     isRenderingPortal = false
 end
@@ -115,7 +131,46 @@ local function ShouldRenderPortal(frame, eyePos)
     return eyePos:DistToSqr(frame:GetPos()) <= maxDist * maxDist
 end
 
---- Dessine l'écran de la caméra sur une face de la porte stable d'un cadre, si le joueur voit cette face.
+local WORLD_UP = Vector(0, 0, 1)
+local TWO_PI = math.pi * 2
+
+--- Calcule les coordonnées de texture ondulées d'un point de l'écran.
+-- Le décalage dépend en continu de la position et du temps : deux cellules voisines restent jointives.
+-- @param u number : position horizontale sur l'écran (0 à gauche, 1 à droite).
+-- @param v number : position verticale sur l'écran (0 en haut, 1 en bas).
+-- @param t number : temps courant en secondes.
+-- @return number, number : coordonnées de texture (u, v) à échantillonner.
+local function GetWaveUV(u, v, t)
+    local wave = CONTROL_DOOR.PortalWave
+    local amp, freq, speed = wave.Amplitude, wave.Frequency * TWO_PI, wave.Speed
+
+    -- Deux ondes croisées, de vitesses légèrement différentes, pour un mouvement dans plusieurs directions.
+    local du = amp * math.sin(t * speed + v * freq)
+    local dv = amp * math.sin(t * speed * 0.8 + u * freq + 1.3)
+
+    -- On échantillonne la zone [amp, 1 - amp] de la texture : le décalage ne sort jamais de l'image.
+    local scale = 1 - amp * 2
+    return amp + u * scale + du, amp + v * scale + dv
+end
+
+--- Ajoute un sommet de l'écran au mesh en cours.
+-- @param origin Vector : coin haut-gauche de l'écran.
+-- @param right Vector : vecteur largeur de l'écran (de gauche à droite).
+-- @param down Vector : vecteur hauteur de l'écran (de haut en bas).
+-- @param u number : position horizontale (0 à 1).
+-- @param v number : position verticale (0 à 1).
+-- @param t number : temps courant en secondes.
+-- @return nil
+local function EmitScreenVertex(origin, right, down, u, v, t)
+    local tu, tv = GetWaveUV(u, v, t)
+
+    mesh.Position(origin + right * u + down * v)
+    mesh.TexCoord(0, tu, tv)
+    mesh.Color(255, 255, 255, 255)
+    mesh.AdvanceVertex()
+end
+
+--- Dessine l'écran de la caméra sur une face de la porte stable d'un cadre, avec l'effet de vague, si le joueur voit cette face.
 -- @param frame Entity : cadre de porte (control_door_frame).
 -- @param side number : face de la porte (SIDE_FRONT ou SIDE_BACK).
 -- @param eyePos Vector : position de la vue en cours de rendu.
@@ -127,16 +182,36 @@ local function DrawPortalScreen(frame, side, eyePos)
     local center, normal, width, height = GetPortalScreen(frame, side)
     if not center or (eyePos - center):Dot(normal) <= 0 then return end
 
-    -- Repère 3D2D d'un mur : x vers la droite et y vers le bas pour un joueur face à cette face.
-    local ang = normal:Angle()
-    ang:RotateAroundAxis(ang:Up(), 90)
-    ang:RotateAroundAxis(ang:Forward(), 90)
+    -- Repère vu par un joueur face à cette face : la droite du joueur et le bas de l'écran.
+    local right = (-normal):Cross(WORLD_UP) * width
+    local down = -WORLD_UP * height
+    local origin = center - right * 0.5 - down * 0.5
 
-    cam.Start3D2D(center, ang, 1)
-        surface.SetDrawColor(255, 255, 255, 255)
-        surface.SetMaterial(view.mat)
-        surface.DrawTexturedRect(-width * 0.5, -height * 0.5, width, height)
-    cam.End3D2D()
+    local cells = math.max(math.floor(CONTROL_DOOR.PortalWave.Subdivisions), 1)
+    local step = 1 / cells
+    local t = RealTime()
+
+    render.SetMaterial(view.mat)
+    -- Chaque cellule est émise dans les deux sens d'enroulement : l'écran reste visible quel que soit le culling.
+    -- La face cachée n'est jamais vue, l'écran n'étant dessiné que si le joueur est devant (test ci-dessus).
+    mesh.Begin(MATERIAL_QUADS, cells * cells * 2)
+        for row = 0, cells - 1 do
+            local v0, v1 = row * step, (row + 1) * step
+            for col = 0, cells - 1 do
+                local u0, u1 = col * step, (col + 1) * step
+
+                EmitScreenVertex(origin, right, down, u0, v0, t)
+                EmitScreenVertex(origin, right, down, u1, v0, t)
+                EmitScreenVertex(origin, right, down, u1, v1, t)
+                EmitScreenVertex(origin, right, down, u0, v1, t)
+
+                EmitScreenVertex(origin, right, down, u0, v0, t)
+                EmitScreenVertex(origin, right, down, u0, v1, t)
+                EmitScreenVertex(origin, right, down, u1, v1, t)
+                EmitScreenVertex(origin, right, down, u1, v0, t)
+            end
+        end
+    mesh.End()
 end
 
 --- Met à jour la caméra d'une face si le joueur se trouve de ce côté de la porte et que l'intervalle est écoulé.
