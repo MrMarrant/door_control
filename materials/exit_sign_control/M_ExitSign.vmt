@@ -1,0 +1,16 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "exit_sign_control/M_ExitSign"
+	"$phong" "1"
+	"$phongboost" "2"
+	"$phongexponent" "15"
+	"$phongfresnelranges" "[1 3 7]"
+	
+	"$envmap" "env_cubemap"
+	"$normalmapalphaenvmapmask" "1"
+	"$envmaptint" "[.05 .05 .05]"		
+	
+	"$rimlight" "1"
+	"$rimlightexponent" "10"
+	"$rimlightboost" ".5"	
+}

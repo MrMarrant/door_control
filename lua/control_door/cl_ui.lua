@@ -64,12 +64,6 @@ function UI.WithAlpha(col, a)
     return Color(col.r, col.g, col.b, math.floor(col.a * a))
 end
 
---- Joue le son natif de clic des boutons.
--- @return nil
-function UI.PlayClick()
-    surface.PlaySound(CONTROL_DOOR.Sounds.Click)
-end
-
 --- Crée l'overlay plein écran d'un menu, avec fond BLUE et fondu d'ouverture.
 -- @return Panel : overlay créé ; overlay:GetFade() renvoie le facteur de fondu courant.
 function UI.CreateOverlay()
@@ -122,7 +116,6 @@ function UI.CreateQuitButton(overlay, onClick)
         draw.SimpleText(label, "control_door_ui_small", w * 0.5, h * 0.5, UI.WithAlpha(COLORS.CLOSE_TEXT, fade), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     end
     button.DoClick = function()
-        UI.PlayClick()
         onClick()
     end
 

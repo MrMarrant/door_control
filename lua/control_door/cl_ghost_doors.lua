@@ -61,6 +61,7 @@ local function SpawnGhost(frame, data, now)
     model:SetParent(frame)
     model:SetLocalPos(startPos)
     model:SetLocalAngles(GHOST_LOCAL_ANGLES)
+    model:SetModelScale(CONTROL_DOOR.GhostModelScale, 0)
     model:SetRenderMode(RENDERMODE_TRANSALPHA)
     model:SetColor(Color(color.r, color.g, color.b, GHOST_START_ALPHA))
 

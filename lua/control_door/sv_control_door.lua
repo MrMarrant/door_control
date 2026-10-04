@@ -82,8 +82,6 @@ local function TeleportWithFlash(ply, target)
     local half = CONTROL_DOOR.TeleportFlashDuration * 0.5
     local color = CONTROL_DOOR.TeleportFlashColor
 
-    CONTROL_DOOR.PlaySound(ply, CONTROL_DOOR.Sounds.Teleport)
-
     -- Le maintien couvre l'écart éventuel entre la fin du fondu et le déclenchement du timer.
     ply:ScreenFade(SCREENFADE.OUT, color, half, 0.2)
 
@@ -122,6 +120,8 @@ net.Receive("control_door_select", function(len, ply)
     net.Start("control_door_open_panel")
         net.WriteString("close")
     net.Send(ply)
+
+    CONTROL_DOOR.PlaySoundSelf(ply, CONTROL_DOOR.Sounds.Click)
 
     TeleportWithFlash(ply, target)
 end)

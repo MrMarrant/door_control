@@ -233,8 +233,6 @@ local function BuildDoorRow(scroll, overlay, data)
         draw.SimpleText(dist .. " u", "control_door_ui_small", w - 12, h * 0.5, UI.WithAlpha(COLORS.WHITE, fade), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
     end
     row.DoClick = function(self)
-        UI.PlayClick()
-
         net.Start("control_door_select")
             net.WriteUInt(self.ControlDoorEntIndex, 16)
         net.SendToServer()

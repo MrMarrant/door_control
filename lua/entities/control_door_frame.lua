@@ -27,6 +27,7 @@ function ENT:Initialize()
     self:SetSolid(SOLID_VPHYSICS)
     self:SetUseType(SIMPLE_USE)
     self:SetDoorState(CONTROL_DOOR.STATE_UNSTABLE)
+    self:CreateExitSign()
     self:StartUnstableCycle()
 end
 
@@ -38,7 +39,7 @@ if CLIENT then return end
 -- @return nil
 function ENT:StartUnstableCycle()
     self:StopUnstableCycle()
-    CONTROL_DOOR.PlaySound(self, CONTROL_DOOR.Sounds.UnstableLoop, true)
+    CONTROL_DOOR.PlaySoundSelf(self, CONTROL_DOOR.Sounds.UnstableLoop, true)
     self._unstableLoopPlaying = true
 end
 
@@ -51,6 +52,58 @@ function ENT:StopUnstableCycle()
     end
 end
 
+--- Calcule la position locale d'une enseigne pour que son bas touche le haut du cadre, centrée horizontalement.
+-- @param sign Entity : enseigne dont le modèle est déjà défini.
+-- @param angles Angle : rotation de l'enseigne par rapport au cadre.
+-- @return Vector : position locale de l'enseigne dans le repère du cadre.
+function ENT:GetExitSignLocalPos(sign, angles)
+    local frameMins, frameMaxs = self:OBBMins(), self:OBBMaxs()
+    local signMins, signMaxs = sign:OBBMins(), sign:OBBMaxs()
+
+    -- Point d'ancrage de l'enseigne : centre de sa base, ramené dans le repère du cadre selon sa rotation.
+    local anchor = Vector((signMins.x + signMaxs.x) * 0.5, (signMins.y + signMaxs.y) * 0.5, signMins.z)
+    anchor:Rotate(angles)
+
+    local frameTop = Vector((frameMins.x + frameMaxs.x) * 0.5, (frameMins.y + frameMaxs.y) * 0.5, frameMaxs.z)
+    return frameTop - anchor + CONTROL_DOOR.ExitSignOffset
+end
+
+--- Crée l'enseigne attachée au haut du cadre.
+-- @return nil
+function ENT:CreateExitSign()
+    self:RemoveExitSign()
+
+    local model = CONTROL_DOOR.ExitSignModel
+    if not util.IsValidModel(model) then return end
+
+    local sign = ents.Create("prop_dynamic_override")
+    if not IsValid(sign) then return end
+
+    local angles = CONTROL_DOOR.ExitSignAngles
+    sign:SetModel(model)
+
+    local localPos = self:GetExitSignLocalPos(sign, angles)
+    sign:SetPos(self:LocalToWorld(localPos))
+    sign:SetAngles(self:LocalToWorldAngles(angles))
+    sign:SetSolid(SOLID_NONE)
+    sign:SetMoveType(MOVETYPE_NONE)
+    sign:Spawn()
+    sign:SetParent(self)
+    sign:SetLocalPos(localPos)
+    sign:SetLocalAngles(angles)
+    self.ExitSign = sign
+end
+
+--- Supprime l'enseigne du cadre.
+-- @return nil
+function ENT:RemoveExitSign()
+    if IsValid(self.ExitSign) then
+        self.ExitSign:Remove()
+    end
+
+    self.ExitSign = nil
+end
+
 --- Crée une porte stable avec un effet de portail.
 -- @return nil
 function ENT:CreateStableDoor()
@@ -60,21 +113,19 @@ function ENT:CreateStableDoor()
     if not IsValid(door) then return end
 
     door:SetModel("models/props_c17/door01_left.mdl")
-    door:SetPos(self:LocalToWorld(CONTROL_DOOR.PortalOffset))
+    door:SetPos(self:LocalToWorld(CONTROL_DOOR.PortalStableOffset))
     door:SetAngles(self:LocalToWorldAngles(Angle(0, 180, 0)))
     door:SetSolid(SOLID_NONE)
     door:SetMoveType(MOVETYPE_NONE)
     door:Spawn()
     door:SetParent(self)
-    door:SetLocalPos(CONTROL_DOOR.PortalOffset)
+    door:SetLocalPos(CONTROL_DOOR.PortalStableOffset)
     door:SetLocalAngles(Angle(0, 180, 0))
     door:SetRenderMode(RENDERMODE_TRANSALPHA)
     door:SetColor(Color(199, 217, 252, 0))
     door:DrawShadow(false)
     self.PortalDoor = door
     self:SetPortalDoor(door)
-
-    CONTROL_DOOR.PlaySound(self, CONTROL_DOOR.Sounds.StableOpen)
 end
 
 --- Supprime la porte stable actuelle.
@@ -105,6 +156,7 @@ function ENT:Use(activator, caller, useType, value)
         self:SetDoorState(CONTROL_DOOR.STATE_STABLE)
         self:StopUnstableCycle()
         self:CreateStableDoor()
+            CONTROL_DOOR.PlaySoundSelf(activator, CONTROL_DOOR.Sounds.StableOpen)
         return
     end
 end
@@ -114,6 +166,7 @@ end
 function ENT:OnRemove()
     self:StopUnstableCycle()
     self:RemoveStableDoor()
+    self:RemoveExitSign()
 end
 
 --- Fait apparaître la porte depuis le menu Sandbox.

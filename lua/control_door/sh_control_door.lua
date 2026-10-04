@@ -28,7 +28,7 @@ end
 -- @param sound string : chemin du son (relatif à sound/), ignoré s'il est vide.
 -- @param loop boolean : vrai si le son doit être lu en boucle.
 -- @return nil
-function CONTROL_DOOR.PlaySound(ent, sound, loop)
+function CONTROL_DOOR.PlaySoundSelf(ent, sound, loop)
     if not isstring(sound) or sound == "" then return end
 
     local filter = nil
