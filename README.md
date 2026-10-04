@@ -48,3 +48,7 @@ All gamemodes.
 ### Dependencies
 
 - None
+
+## License
+
+Released under the [MIT License](LICENSE): you may use, modify and redistribute this addon, as long as the copyright notice crediting **MrMarrant** is kept.

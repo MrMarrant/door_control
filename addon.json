@@ -2,5 +2,5 @@
   "title": "Control Door",
   "type": "ServerContent",
   "tags": ["roleplay"],
-  "ignore": ["*.md", ".git*", ".DS_Store"]
+  "ignore": ["*.md", ".git*", ".DS_Store", "LICENSE"]
 }
