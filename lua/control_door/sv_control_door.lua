@@ -113,7 +113,7 @@ net.Receive("control_door_select", function(len, ply)
 
     local target = Entity(net.ReadUInt(16))
     if target == source or not IsValid(target) then return end
-    if target:GetClass() ~= "control_door_frame" or not CONTROL_DOOR.IsStableDoor(target) then return end
+    if not CONTROL_DOOR.IsDoorFrame(target) or not CONTROL_DOOR.IsStableDoor(target) then return end
 
     openedFrom[ply] = nil
 
@@ -139,15 +139,6 @@ local function SpawnTestDoor(ply, trace)
     ent:Spawn()
     ent:Activate()
 end
-
---- Commande de test réservée aux superadmins : fait apparaître une porte.
--- @param ply Player : joueur qui exécute la commande.
--- @return nil
-concommand.Add("control_door_spawn", function(ply)
-    if not IsValid(ply) or not ply:IsSuperAdmin() then return end
-
-    SpawnTestDoor(ply, ply:GetEyeTrace())
-end)
 
 --- Ouvre une interface de portail pour un joueur.
 -- @param ply Player : joueur qui interagit.

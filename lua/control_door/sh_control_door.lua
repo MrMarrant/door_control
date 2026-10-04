@@ -1,4 +1,5 @@
 CONTROL_DOOR = CONTROL_DOOR or {}
+local FRAME_CLASS_PATTERN = "control_door_frame*"
 
 --- Retourne vrai si l'entité a bien un état stable.
 -- @param ent Entity : entité à vérifier.
@@ -9,12 +10,25 @@ function CONTROL_DOOR.IsStableDoor(ent)
     return ent:GetDoorState() == CONTROL_DOOR.STATE_STABLE
 end
 
+--- Retourne vrai si l'entité est un cadre de porte (de base ou une de ses variantes).
+-- @param ent Entity : entité à vérifier.
+-- @return boolean : vrai si c'est un cadre de porte.
+function CONTROL_DOOR.IsDoorFrame(ent)
+    return IsValid(ent) and ent.IsControlDoorFrame == true
+end
+
+--- Retourne tous les cadres de porte existants dans le realm courant (toutes variantes).
+-- @return table : liste d'entités cadre de porte.
+function CONTROL_DOOR.FindDoorFrames()
+    return ents.FindByClass(FRAME_CLASS_PATTERN)
+end
+
 --- Retourne la liste des portes stables du serveur.
 -- @return table : tableau des entités stables.
 function CONTROL_DOOR.GetStableDoors()
     local stable = {}
 
-    for _, ent in ipairs(ents.FindByClass("control_door_frame")) do
+    for _, ent in ipairs(CONTROL_DOOR.FindDoorFrames()) do
         if CONTROL_DOOR.IsStableDoor(ent) then
             table.insert(stable, ent)
         end

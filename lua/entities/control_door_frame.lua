@@ -2,10 +2,12 @@ AddCSLuaFile()
 
 ENT.Type = "anim"
 ENT.Base = "base_gmodentity"
-ENT.PrintName = "#control_door.entity.frame.name"
+ENT.PrintName = "#control_door.entity.frame.unstable.name"
 ENT.Category = "Control"
 ENT.Spawnable = true
 ENT.AdminOnly = false
+-- Marqueur hérité par toutes les variantes de cadre (ex. control_door_frame_stable).
+ENT.IsControlDoorFrame = true
 
 --- Déclare les variables réseau de l'entité (synchronisées serveur → clients).
 -- Génère ENT:Get/SetDoorState (string) et ENT:Get/SetPortalDoor (Entity : porte stable affichée).
@@ -26,14 +28,20 @@ function ENT:Initialize()
     self:SetMoveType(MOVETYPE_NONE)
     self:SetSolid(SOLID_VPHYSICS)
     self:SetUseType(SIMPLE_USE)
-    self:SetDoorState(CONTROL_DOOR.STATE_UNSTABLE)
     self:CreateExitSign()
-    self:StartUnstableCycle()
+    self:ApplyInitialState()
 end
 
 -- Côté client : l'écran des portes stables est dessiné par cl_portal_view.lua,
 -- et les portes fantômes de l'état instable sont créées et animées par cl_ghost_doors.lua.
 if CLIENT then return end
+
+--- Place la porte dans son état de départ : instable, avec son ambiance (surchargée par les variantes).
+-- @return nil
+function ENT:ApplyInitialState()
+    self:SetDoorState(CONTROL_DOOR.STATE_UNSTABLE)
+    self:StartUnstableCycle()
+end
 
 --- Démarre l'ambiance de l'état instable (son en boucle) ; les portes fantômes sont gérées côté client.
 -- @return nil

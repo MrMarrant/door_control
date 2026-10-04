@@ -16,5 +16,5 @@ end
 --- Rafraîchit périodiquement la liste des cadres de porte connus du client.
 -- @return nil
 timer.Create("control_door_frame_scan", FRAME_SCAN_INTERVAL, 0, function()
-    knownFrames = ents.FindByClass("control_door_frame")
+    knownFrames = CONTROL_DOOR.FindDoorFrames()
 end)
