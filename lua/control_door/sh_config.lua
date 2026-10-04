@@ -62,7 +62,7 @@ CONTROL_DOOR.GhostRenderDistance = 2000
 -- Échelle des modèles de portes fantômes (1 = taille d'origine).
 CONTROL_DOOR.GhostModelScale = 0.9
 
-CONTROL_DOOR.Sounds = {  -- TODO : a faire les sons
+CONTROL_DOOR.Sounds = {
     UnstableLoop = "door_control/unstable_door.wav",
     StableOpen = "door_control/stable_door.mp3",
     Click = "door_control/pick_destination.mp3",

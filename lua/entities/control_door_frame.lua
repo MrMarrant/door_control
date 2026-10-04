@@ -3,7 +3,7 @@ AddCSLuaFile()
 ENT.Type = "anim"
 ENT.Base = "base_gmodentity"
 ENT.PrintName = "#control_door.entity.frame.name"
-ENT.Category = "Control Door"
+ENT.Category = "Control"
 ENT.Spawnable = true
 ENT.AdminOnly = false
 
