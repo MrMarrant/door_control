@@ -16,6 +16,7 @@ Garry's Mod addon (DarkRP / Sandbox) that adds **control doors**, heavily inspir
 
 1. Put the `door_control` folder in `garrysmod/addons/`.
 2. Restart the server.
+3. That's it.
 
 ## Usage
 
@@ -41,11 +42,11 @@ All settings are in [`lua/control_door/sh_config.lua`](lua/control_door/sh_confi
 | Map menu | `MapListWidth`, `MapViewCeilingClip` | List width, skybox ceiling clipping in the top-down view |
 | Sounds | `Sounds` (`UnstableLoop`, `StableOpen`, `Click`) | Sounds played (paths relative to `sound/`) |
 
-### GameModes
+## GameModes
 
-All gamemodes.
+- All gamemodes
 
-### Dependencies
+## Dependencies
 
 - None
 
